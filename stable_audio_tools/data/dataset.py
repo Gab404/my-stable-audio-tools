@@ -226,6 +226,7 @@ class SampleDataset(torch.utils.data.Dataset):
                 if root_path in audio_filename:
                     info["relpath"] = path.relpath(audio_filename, root_path)
 
+            info["test"] = os.path.join(*audio_filename.split(os.sep)[-2:])
             info["timestamps"] = (t_start, t_end)
             info["seconds_start"] = seconds_start
             info["seconds_total"] = seconds_total
@@ -259,7 +260,9 @@ class SampleDataset(torch.utils.data.Dataset):
 
             return (audio, info)
         except Exception as e:
+            import traceback
             print(f'Couldn\'t load file {audio_filename}: {e}')
+            traceback.print_exc()
             return self[random.randrange(len(self))]
 
 class PreEncodedDataset(torch.utils.data.Dataset):
