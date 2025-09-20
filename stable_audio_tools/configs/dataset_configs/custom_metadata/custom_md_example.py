@@ -14,6 +14,8 @@ def get_custom_metadata(info, audio):
         for line in jsonl_file:
             entry = json.loads(line)
             if entry["filepath"] == filename:
+                info["seconds_start"] = entry["start"]
+                info["seconds_total"] = entry["duration"]
                 prompt = entry.get("prompt", "")
                 break
 

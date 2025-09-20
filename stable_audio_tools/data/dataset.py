@@ -227,9 +227,8 @@ class SampleDataset(torch.utils.data.Dataset):
                     info["relpath"] = path.relpath(audio_filename, root_path)
             info["test"] = os.path.join(*audio_filename.split(os.sep)[-2:])
             info["timestamps"] = (t_start, t_end)
-            info["seconds_start"] = seconds_start
-            print("MY SEC START: ", seconds_start)
-            info["seconds_total"] = seconds_total
+            # info["seconds_start"] = seconds_start
+            # info["seconds_total"] = seconds_total
             info["padding_mask"] = padding_mask
             info["sample_rate"] = self.sr
 
@@ -260,7 +259,7 @@ class SampleDataset(torch.utils.data.Dataset):
 
             return (audio, info)
         except Exception as e:
-            print(f'Couldn\'t load file {audio_filename}: {e}')
+            print(f'ouldn\'t load file {audio_filename}: {e}')
             return self[random.randrange(len(self))]
 
 class PreEncodedDataset(torch.utils.data.Dataset):
@@ -355,7 +354,7 @@ class PreEncodedDataset(torch.utils.data.Dataset):
 
             return (latents, info)
         except Exception as e:
-            print(f'Couldn\'t load file {latent_filename}: {e}')
+            print(f'CCouldn\'t load file {latent_filename}: {e}')
             return self[random.randrange(len(self))]
 
 # S3 code and WDS preprocessing code based on implementation by Scott Hawley originally in https://github.com/zqevans/audio-diffusion/blob/main/dataset/dataset.py
