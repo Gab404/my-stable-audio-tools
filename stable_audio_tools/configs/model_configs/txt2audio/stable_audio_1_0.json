@@ -47,8 +47,7 @@
                     "type": "t5",
                     "config": {
                         "t5_model_name": "t5-base",
-                        "max_length": 128,
-                        "enable_grad": true
+                        "max_length": 128
                     }
                 },
                 {
