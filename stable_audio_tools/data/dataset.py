@@ -228,6 +228,7 @@ class SampleDataset(torch.utils.data.Dataset):
             info["test"] = os.path.join(*audio_filename.split(os.sep)[-2:])
             info["timestamps"] = (t_start, t_end)
             info["seconds_start"] = seconds_start
+            print("MY SEC START: ", seconds_start)
             info["seconds_total"] = seconds_total
             info["padding_mask"] = padding_mask
             info["sample_rate"] = self.sr
