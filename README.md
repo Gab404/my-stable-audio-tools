@@ -1,6 +1,39 @@
 # stable-audio-tools
 Training and inference code for audio generation models
 
+# My results
+
+### Prompt 1 — *"A jazzy relaxed jazz rap beat at 95 BPM, featuring piano and nylon guitar, with lovely moods."*
+
+| Model | Audio |
+|:--|:--|
+| Stable Audio | <audio controls style="width:200px;" src="results/stable-audio-1/1830357556.wav"></audio> |
+| DreamT 8 | <audio controls style="width:200px;" src="results/dreamt_8/1830357556.wav"></audio> |
+| DreamT 14 | <audio controls style="width:200px;" src="results/dreamt_14/1830357556.wav"></audio> |
+| DreamT 17 | <audio controls style="width:200px;" src="results/dreamt_17/1830357556.wav"></audio> |
+
+---
+
+### Prompt 2 — *"A dark and melancholic cloud trap beat, with nostalgic piano, plucked bass and synth bells, at 110 BPM."*
+
+| Model | Audio |
+|:--|:--|
+| Stable Audio | <audio controls style="width:200px;" src="results/stable-audio-1/2306776750.wav"></audio> |
+| DreamT 8 | <audio controls style="width:200px;" src="results/dreamt_8/2306776750.wav"></audio> |
+| DreamT 14 | <audio controls style="width:200px;" src="results/dreamt_14/2306776750.wav"></audio> |
+| DreamT 17 | <audio controls style="width:200px;" src="results/dreamt_17/2306776750.wav"></audio> |
+
+---
+
+### Prompt 3 — *"A laid back lo-fi jazz rap at 85 BPM, featuring deep sub, plucked bass, and vocal chop, with chill and jazzy relaxed moods."*
+
+| Model | Audio |
+|:--|:--|
+| Stable Audio | <audio controls style="width:200px;" src="results/stable-audio-1/2505643137.wav"></audio> |
+| DreamT 8 | <audio controls style="width:200px;" src="results/dreamt_8/2505643137.wav"></audio> |
+| DreamT 14 | <audio controls style="width:200px;" src="results/dreamt_14/2505643137.wav"></audio> |
+| DreamT 17 | <audio controls style="width:200px;" src="results/dreamt_17/2505643137.wav"></audio> |
+
 # Install
 
 The library can be installed from PyPI with:
