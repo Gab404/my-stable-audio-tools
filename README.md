@@ -1,41 +1,8 @@
-# stable-audio-tools
-Training and inference code for audio generation models
+# my-stable-audio-tools
+Stabe Audio Open 1.0 fine tuned for rap/trap/r&b beat generation. 
 <p align="center">
   <img src="preview.gif" alt="preview" width="400"/>
 </p>
-
-# My results
-
-### Prompt 1 — *"A jazzy relaxed jazz rap beat at 95 BPM, featuring piano and nylon guitar, with lovely moods."*
-
-| Model | Audio |
-|:--|:--|
-| Stable Audio | <audio controls style="width:200px;" src="results/stable-audio-1/1830357556.wav"></audio> |
-| DreamT 8 | <audio controls style="width:200px;" src="results/dreamt_8/1830357556.wav"></audio> |
-| DreamT 14 | <audio controls style="width:200px;" src="results/dreamt_14/1830357556.wav"></audio> |
-| DreamT 17 | <audio controls style="width:200px;" src="results/dreamt_17/1830357556.wav"></audio> |
-
----
-
-### Prompt 2 — *"A dark and melancholic cloud trap beat, with nostalgic piano, plucked bass and synth bells, at 110 BPM."*
-
-| Model | Audio |
-|:--|:--|
-| Stable Audio | <audio controls style="width:200px;" src="results/stable-audio-1/2306776750.wav"></audio> |
-| DreamT 8 | <audio controls style="width:200px;" src="results/dreamt_8/2306776750.wav"></audio> |
-| DreamT 14 | <audio controls style="width:200px;" src="results/dreamt_14/2306776750.wav"></audio> |
-| DreamT 17 | <audio controls style="width:200px;" src="results/dreamt_17/2306776750.wav"></audio> |
-
----
-
-### Prompt 3 — *"A laid back lo-fi jazz rap at 85 BPM, featuring deep sub, plucked bass, and vocal chop, with chill and jazzy relaxed moods."*
-
-| Model | Audio |
-|:--|:--|
-| Stable Audio | <audio controls style="width:200px;" src="results/stable-audio-1/2505643137.wav"></audio> |
-| DreamT 8 | <audio controls style="width:200px;" src="results/dreamt_8/2505643137.wav"></audio> |
-| DreamT 14 | <audio controls style="width:200px;" src="results/dreamt_14/2505643137.wav"></audio> |
-| DreamT 17 | <audio controls style="width:200px;" src="results/dreamt_17/2505643137.wav"></audio> |
 
 # Install
 
@@ -188,6 +155,7 @@ The following properties are defined in the top level of the model configuration
 ## Dataset config
 `stable-audio-tools` currently supports two kinds of data sources: local directories of audio files, and WebDataset datasets stored in Amazon S3. More information can be found in [the dataset config documentation](docs/datasets.md)
 
-# Todo
-- [ ] Add troubleshooting section
-- [ ] Add contribution guidelines 
+# Sources
+
+- [**LoRAW**](https://github.com/NeuralNotW0rk/LoRAW) — Pipeline implementation for stable audio open LoRA finetuning.
+- [**Stable Audio Tools**](https://github.com/Stability-AI/stable-audio-tools) — Official stability.ai framework to use stable audio open.
