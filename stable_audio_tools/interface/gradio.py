@@ -23,8 +23,8 @@ from .interfaces.diffusion_cond import create_diffusion_cond_ui
 
 model = None
 model_type = None
-sample_rate = 32000
-sample_size = 1920000
+sample_size = 2097152
+sample_rate = 44100
 
 def load_model(model_config=None, model_ckpt_path=None, pretrained_name=None, pretransform_ckpt_path=None, device="cuda", model_half=False):
     global model, sample_rate, sample_size, model_type
@@ -70,12 +70,15 @@ def generate_uncond(
         init_audio=None,
         init_noise_level=1.0,
         batch_size=1,
-        preview_every=None
+        preview_every=None,
+        visualize_checkbox=False
         ):
 
     global preview_images
 
     preview_images = []
+
+    print(visualize_checkbox)
 
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -200,6 +203,7 @@ def generate_lm(
     return ("output.wav", [audio_spectrogram])
 
 
+
 def create_uncond_sampling_ui(model_config):   
     generate_button = gr.Button("Generate", variant='primary', scale=1)
     
@@ -219,6 +223,7 @@ def create_uncond_sampling_ui(model_config):
                     sampler_type_dropdown = gr.Dropdown(["dpmpp-2m-sde", "dpmpp-3m-sde", "k-heun", "k-lms", "k-dpmpp-2s-ancestral", "k-dpm-2", "k-dpm-fast"], label="Sampler type", value="dpmpp-3m-sde")
                     sigma_min_slider = gr.Slider(minimum=0.0, maximum=2.0, step=0.01, value=0.03, label="Sigma min")
                     sigma_max_slider = gr.Slider(minimum=0.0, maximum=1000.0, step=0.1, value=500, label="Sigma max")
+                    
 
             with gr.Accordion("Init audio", open=False):
                 init_audio_checkbox = gr.Checkbox(label="Use init audio")
@@ -227,7 +232,7 @@ def create_uncond_sampling_ui(model_config):
 
         with gr.Column():
             audio_output = gr.Audio(label="Output audio", interactive=False)
-            audio_spectrogram_output = gr.Gallery(label="Output spectrogram", show_label=False)
+            audio_spectrogram_output = gr.Image(label="Output spectrogram", type="pil")  # utiliser Image pour GIF
             send_to_init_button = gr.Button("Send to init audio", scale=1)
             send_to_init_button.click(fn=lambda audio: audio, inputs=[audio_output], outputs=[init_audio_input])
     
@@ -240,11 +245,11 @@ def create_uncond_sampling_ui(model_config):
             sigma_max_slider,
             init_audio_checkbox,
             init_audio_input,
-            init_noise_level_slider,
+            init_noise_level_slider
         ], 
         outputs=[
             audio_output, 
-            audio_spectrogram_output
+            audio_spectrogram_output,
         ], 
         api_name="generate")
 

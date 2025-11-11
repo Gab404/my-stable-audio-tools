@@ -34,6 +34,30 @@ def condense_prompt(prompt):
         prompt = "_"
     return prompt
 
+import io
+def images_to_gif(preview_images, duration=100, filename="preview.gif"):
+    """
+    Convertit une liste de tuples (PIL Image, label) en GIF et l'enregistre sur le disque.
+    
+    Args:
+        preview_images: liste de tuples (PIL.Image, label)
+        duration: durée de chaque frame en ms
+        filename: chemin du fichier GIF à enregistrer
+        
+    Returns:
+        le chemin du fichier GIF sauvegardé, ou None si aucune image
+    """
+    if len(preview_images) == 0:
+        return None
+    
+    # On récupère uniquement les images
+    images = [img for img, _ in preview_images]
+    
+    # Sauvegarde en GIF
+    images[0].save(filename, format="GIF", save_all=True, append_images=images[1:], duration=duration, loop=0)
+    
+    return filename
+
 def generate_cond(
         prompt,
         negative_prompt=None,
@@ -41,7 +65,7 @@ def generate_cond(
         seconds_total=30,
         cfg_scale=6.0,
         steps=250,
-        preview_every=None,
+        preview_every=10,
         seed=-1,
         sampler_type="dpmpp-3m-sde",
         sigma_min=0.03,
@@ -58,14 +82,17 @@ def generate_cond(
         mask_maskstart=None,
         mask_maskend=None,
         inpaint_audio=None,
-        batch_size=1    
+        visualize_checkbox=False,
+        batch_size=1
     ):
+    if visualize_checkbox:
+        preview_every = 5
+    print("VIZ 1: ", visualize_checkbox, preview_every)
 
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
     gc.collect()
 
-    print(f"Prompt: {prompt}")
 
     global preview_images
     preview_images = []
@@ -164,12 +191,11 @@ def generate_cond(
         global preview_images
         denoised = callback_info["denoised"]
         current_step = callback_info["i"]
-        t = callback_info["t"]
         sigma = callback_info["sigma"]
 
         if diffusion_objective == "v":
-            alphas, sigmas = math.cos(t * math.pi / 2), math.sin(t * math.pi / 2)
-            log_snr = math.log((alphas / sigmas) + 1e-6)
+            alphas, sigmas_ = math.sqrt(1 / (1 + sigma**2)), math.sqrt(sigma**2 / (1 + sigma**2))
+            log_snr = math.log((alphas / sigmas_) + 1e-6)
         elif diffusion_objective in ["rectified_flow", "rf_denoiser"]:
             log_snr = math.log(((1 - sigma) / sigma) + 1e-6)
 
@@ -181,12 +207,15 @@ def generate_cond(
             audio_spectrogram = audio_spectrogram_image(denoised, sample_rate=sample_rate)
             preview_images.append((audio_spectrogram, f"Step {current_step} sigma={sigma:.3f} logSNR={log_snr:.3f}"))
 
+    steps = int(steps)
+    print(f"[DEBUG] Steps reçus depuis l’UI : {steps}")
+    print(cfg_scale, seconds_start, seconds_total)
     generate_args = {
         "model": model,
-        "conditioning": conditioning,
-        "negative_conditioning": negative_conditioning,
         "steps": steps,
         "cfg_scale": cfg_scale,
+        "conditioning": conditioning,
+        "negative_conditioning": negative_conditioning,
         "cfg_interval": (cfg_interval_min, cfg_interval_max),
         "batch_size": batch_size,
         "sample_size": input_sample_size,
@@ -199,7 +228,8 @@ def generate_cond(
         "init_noise_level": init_noise_level,
         "callback": progress_callback if preview_every is not None else None,
         "scale_phi": cfg_rescale,
-        "rho": rho
+        "rho": rho,
+        "visualize_checkbox": visualize_checkbox
     }
 
      # If inpainting, send mask args
@@ -207,6 +237,7 @@ def generate_cond(
     if model_type == "diffusion_cond":
 
         # Do the audio generation
+        print("Gabriel")
         audio = generate_diffusion_cond(**generate_args)
 
     elif model_type == "diffusion_cond_inpaint":
@@ -223,7 +254,7 @@ def generate_cond(
                 "inpaint_audio": inpaint_audio,
                 "inpaint_mask": inpaint_mask
             })
-
+        print("Gabriel77")
         audio = generate_diffusion_cond_inpaint(**generate_args)
 
     # Filenaming convention
@@ -286,7 +317,11 @@ def generate_cond(
     if file_naming in ["verbose", "prompt"]:
         delete_files_async([output_wav, output_filename], 30)
 
+    if preview_every is not None and preview_every != 0:
+       images_to_gif(preview_images)
+
     return (output_filename, [audio_spectrogram, *preview_images])
+
 
 #  Asynchronously delete the given list of filenames after delay seconds. Sets up thread that sleeps for delay then deletes. 
 def delete_files_async(filenames, delay):
@@ -323,6 +358,8 @@ def create_sampling_ui(model_config):
         with gr.Column(scale=6):
             prompt = gr.Textbox(show_label=False, placeholder="Prompt")
             negative_prompt = gr.Textbox(show_label=False, placeholder="Negative prompt")
+            visualize_checkbox = gr.Checkbox(label="Mode Visualisation", value=False)
+
         generate_button = gr.Button("Generate", variant='primary', scale=1)
 
     with gr.Row(equal_height=False):
@@ -342,6 +379,7 @@ def create_sampling_ui(model_config):
                     default_steps = 100
                     
                 steps_slider = gr.Slider(minimum=1, maximum=500, step=1, value=default_steps, label="Steps")
+                print("steps slider: ", steps_slider)
                 # CFG scale 
                 default_cfg_scale = 1.0 if is_rf_denoiser else 7.0
                 cfg_scale_slider = gr.Slider(minimum=0.0, maximum=25.0, step=0.1, value=default_cfg_scale, label="CFG scale")
@@ -350,6 +388,7 @@ def create_sampling_ui(model_config):
                 with gr.Row():
                     # Seed
                     seed_textbox = gr.Textbox(label="Seed (set to -1 for random seed)", value="-1")
+                    # visualize_checkbox = gr.Checkbox(label="Mode Visualisation", value=False)
 
                     cfg_interval_min_slider = gr.Slider(minimum=0.0, maximum=1, step=0.01, value=0.0, label="CFG interval min")
                     cfg_interval_max_slider = gr.Slider(minimum=0.0, maximum=1, step=0.01, value=1.0, label="CFG interval max")
@@ -422,7 +461,8 @@ def create_sampling_ui(model_config):
                 init_noise_level_slider,
                 mask_maskstart_slider,
                 mask_maskend_slider,
-                inpaint_audio_input
+                inpaint_audio_input,
+                visualize_checkbox
             ]
 
         with gr.Column():
@@ -517,11 +557,12 @@ def create_diffusion_cond_ui(model_config, in_model, in_model_half=True, gradio_
         }
     }  
     """
-
+    print("FFFF")
     with gr.Blocks(js=js, theme=gr.themes.Base()) as ui:
         if gradio_title:
             gr.Markdown("### %s" % gradio_title)
         with gr.Tab("Generation"):
+            print("DDDD")
             create_sampling_ui(model_config) 
 
         # JavaScript to autoplay audio immediately after generation (if autoplay enabled)

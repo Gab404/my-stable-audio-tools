@@ -328,82 +328,78 @@ def make_cond_model_fn(model, cond_fn):
 # For sampling, init_data to none
 # For variations, set init_data
 def sample_k(
-        model_fn,
-        noise,
-        init_data=None,
-        steps=100,
-        sampler_type="dpmpp-2m-sde",
-        sigma_min=0.01,
-        sigma_max=100,
-        rho=1.0,
-        device="cuda",
-        callback=None,
-        cond_fn=None,
-        **extra_args
-    ):
+    model_fn,
+    noise,
+    steps,
+    init_data=None,
+    sampler_type="dpmpp-2m-sde",
+    sigma_min=0.01,
+    sigma_max=100,
+    rho=1.0,
+    device="cuda",
+    callback=None,
+    cond_fn=None,
+    visualize_checkbox=False,
+    **extra_args
+):
+    print("VIZ 3 : ", visualize_checkbox, callback)
 
-    is_k_diff = sampler_type in ["k-heun", "k-lms", "k-dpmpp-2s-ancestral", "k-dpm-2", "k-dpm-fast", "k-dpm-adaptive", "dpmpp-2m-sde", "dpmpp-3m-sde","dpmpp-2m"]
+    is_k_diff = sampler_type in [
+        "k-heun", "k-lms", "k-dpmpp-2s-ancestral", "k-dpm-2", "k-dpm-fast",
+        "k-dpm-adaptive", "dpmpp-2m-sde", "dpmpp-3m-sde", "dpmpp-2m"
+    ]
     is_v_diff = sampler_type in ["v-ddim", "v-ddim-cfgpp"]
 
     if is_k_diff:
-
         denoiser = K.external.VDenoiser(model_fn)
 
         if cond_fn is not None:
             denoiser = make_cond_model_fn(denoiser, cond_fn)
 
-        # Make the list of sigmas. Sigma values are scalars related to the amount of noise each denoising step has
         sigmas = K.sampling.get_sigmas_polyexponential(steps, sigma_min, sigma_max, rho, device=device)
-        # Scale the initial noise by sigma
         noise = noise * sigmas[0]
-
-        if init_data is not None:
-            # set the initial latent to the init_data, and noise it with initial sigma
-            x = init_data + noise
-        else:
-            # SAMPLING
-            # set the initial latent to noise
-            x = noise
-
-
+        x = init_data + noise if init_data is not None else noise
+        
+        # --- Appel du sampler ---
         if sampler_type == "k-heun":
-            return K.sampling.sample_heun(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
+            samples = K.sampling.sample_heun(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
         elif sampler_type == "k-lms":
-            return K.sampling.sample_lms(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
+            samples = K.sampling.sample_lms(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
         elif sampler_type == "k-dpmpp-2s-ancestral":
-            return K.sampling.sample_dpmpp_2s_ancestral(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
+            samples = K.sampling.sample_dpmpp_2s_ancestral(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
         elif sampler_type == "k-dpm-2":
-            return K.sampling.sample_dpm_2(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
+            samples = K.sampling.sample_dpm_2(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
         elif sampler_type == "k-dpm-fast":
-            return K.sampling.sample_dpm_fast(denoiser, x, sigma_min, sigma_max, steps, disable=False, callback=callback, extra_args=extra_args)
+            samples = K.sampling.sample_dpm_fast(denoiser, x, sigma_min, sigma_max, steps, disable=False, callback=callback, extra_args=extra_args)
         elif sampler_type == "k-dpm-adaptive":
-            return K.sampling.sample_dpm_adaptive(denoiser, x, sigma_min, sigma_max, rtol=0.01, atol=0.01, disable=False, callback=callback, extra_args=extra_args)
+            samples = K.sampling.sample_dpm_adaptive(denoiser, x, sigma_min, sigma_max, rtol=0.01, atol=0.01, disable=False, callback=callback, extra_args=extra_args)
         elif sampler_type == "dpmpp-2m":
-            return K.sampling.sample_dpmpp_2m(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
+            samples = K.sampling.sample_dpmpp_2m(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
         elif sampler_type == "dpmpp-2m-sde":
-            return K.sampling.sample_dpmpp_2m_sde(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
+            samples = K.sampling.sample_dpmpp_2m_sde(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
         elif sampler_type == "dpmpp-3m-sde":
-            return K.sampling.sample_dpmpp_3m_sde(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
-    elif is_v_diff:
+            samples = K.sampling.sample_dpmpp_3m_sde(denoiser, x, sigmas, disable=False, callback=callback, extra_args=extra_args)
+        else:
+            raise ValueError(f"Unknown sampler type {sampler_type}")
 
-        if sigma_max > 1: # sigma_max should be between 0 and 1
+        return samples
+
+    elif is_v_diff:
+        if sigma_max > 1:
             sigma_max = 1
 
         if cond_fn is not None:
             model_fn = make_cond_model_fn(model_fn, cond_fn)
 
         alpha, sigma = t_to_alpha_sigma(torch.tensor(sigma_max))
+        x = init_data * alpha + noise * sigma if init_data is not None else noise
 
-        if init_data is not None:
-            x = init_data * alpha + noise * sigma
-        else:
-            x = noise
+        use_cfg_pp = sampler_type == "v-ddim-cfgpp"
+        return sample(model_fn, x, steps, eta=0.0, sigma_max=sigma_max, cfg_pp=use_cfg_pp, callback=callback, **extra_args)
 
-        if sampler_type == "v-ddim" or sampler_type == "v-ddim-cfgpp":
-            use_cfg_pp = sampler_type == "v-ddim-cfgpp"
-            return sample(model_fn, x, steps, eta=0.0, sigma_max=sigma_max, cfg_pp=use_cfg_pp, callback=callback, **extra_args)
     else:
         raise ValueError(f"Unknown sampler type {sampler_type}")
+
 
 # init_data is init_audio as latents (if this is latent diffusion)
 # For sampling, set both init_data and mask to None

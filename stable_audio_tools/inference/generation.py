@@ -125,7 +125,6 @@ def generate_diffusion_cond(
         return_latents: Whether to return the latents used for generation instead of the decoded audio.
         **sampler_kwargs: Additional keyword arguments to pass to the sampler.    
     """
-
     # The length of the output in audio samples 
     audio_sample_size = sample_size
 
@@ -137,6 +136,8 @@ def generate_diffusion_cond(
     # The user can explicitly set the seed to deterministically generate the same output. Otherwise, use a random seed.
     seed = seed if seed != -1 else np.random.randint(0, 2**32 - 1)
     print(seed)
+    visualize_checkbox = "visualize_checkbox" in sampler_kwargs
+    print("VIZ 2 : ", visualize_checkbox)
     torch.manual_seed(seed)
     # Define the initial noise immediately after setting the seed
     noise = torch.randn([batch_size, model.io_channels, sample_size], device=device)
@@ -192,7 +193,8 @@ def generate_diffusion_cond(
 
     if diff_objective == "v":    
         # k-diffusion denoising process go!
-        sampled = sample_k(model.model, noise, init_audio, steps, **sampler_kwargs, **conditioning_inputs, **negative_conditioning_tensors, cfg_scale=cfg_scale, batch_cfg=True, rescale_cfg=True, device=device)
+        print("GO")
+        sampled = sample_k(model.model, noise, steps, init_data=init_audio, **sampler_kwargs, **conditioning_inputs, **negative_conditioning_tensors, cfg_scale=cfg_scale, batch_cfg=True, rescale_cfg=True, device=device)
     elif diff_objective in ["rectified_flow", "rf_denoiser"]:
 
         if "sigma_min" in sampler_kwargs:
