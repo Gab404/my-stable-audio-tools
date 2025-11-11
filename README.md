@@ -1,7 +1,7 @@
 # stable-audio-tools
 Training and inference code for audio generation models
 <p align="center">
-  <img src="preview.gif" alt="preview" width="300"/>
+  <img src="preview.gif" alt="preview" width="400"/>
 </p>
 
 # My results
